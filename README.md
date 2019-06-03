@@ -1,6 +1,6 @@
 # LAB - 16
 
-## Event Driven Development
+## Event Driven Application
 
 ### Author: Jesse Van Volkinburg
 
