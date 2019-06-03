@@ -10,53 +10,48 @@ const eventNames = {
   TO_BUFFER: 'TO_BUFFER',
   WRITE: 'WRITE',
   ERROR: 'ERROR',
+  LOG: 'LOG',
 };
 
-const pRead = (file) => {
-  return fs.readFile(file).catch((error) => {
-    throw error;
-  });
-};
-
-const sConvert = (fileBuffer) => {
-  return fileBuffer.toString().toUpperCase();
-};
-
-const bCreateBuffer = (string) => {
-  return Buffer.from(string);
-};
-
-const pWrite = (file, buffer) => {
-  return fs.writeFile(file, buffer).catch((error) => {
-    throw error;
-  });
-};
-
-const alterFile = (file) => {
-  pRead(file)
+const handleRead = (file) => {
+  fs.readFile(file)
     .then((buffer) => {
-      // event here
-      let text = sConvert(buffer);
-      return pWrite(file, bCreateBuffer(text)); // emit next event
-    })
-    .then(() => {
-      // event here
-      console.log(`${file} saved`); // emit console log event
+      eventEmitter.emit(eventNames.CONVERT, buffer);
     })
     .catch((error) => {
-      throw error;
+      eventEmitter.emit(eventNames.ERROR, error);
     });
 };
 
-let file = process.argv.slice(2).shift();
-alterFile(file);
+const handleConvert = (fileBuffer) => {
+  let newString = fileBuffer.toString().toUpperCase();
+  eventEmitter.emit(eventNames.TO_BUFFER, newString);
+};
 
-eventEmitter.on(eventNames.READ, file => pRead(file));
-eventEmitter.on(eventNames.CONVERT, buffer => sConvert(buffer));
-eventEmitter.on(eventNames.TO_BUFFER, string => bCreateBuffer(string));
-eventEmitter.on(eventNames.WRITE, (file, buffer) => pWrite(file, buffer));
+const handleCreateBuffer = (string) => {
+  let newBuffer = Buffer.from(string);
+  eventEmitter.emit(eventNames.WRITE, `new-${file}`, newBuffer);
+};
+
+const handleWrite = (file, buffer) => {
+  fs.writeFile(file, buffer)
+    .then(() => {
+      eventEmitter.emit(eventNames.LOG, `${file} written out`);
+    })
+    .catch((error) => {
+      eventEmitter.emit(eventNames.ERROR, error);
+    });
+};
+
+eventEmitter.on(eventNames.READ, (file) => handleRead(file));
+eventEmitter.on(eventNames.CONVERT, (buffer) => handleConvert(buffer));
+eventEmitter.on(eventNames.TO_BUFFER, (string) => handleCreateBuffer(string));
+eventEmitter.on(eventNames.WRITE, (file, buffer) => handleWrite(file, buffer));
+eventEmitter.on(eventNames.LOG, (payload) => console.log(payload));
 
 eventEmitter.on(eventNames.ERROR, (error) => {
   throw error;
 });
 
+let file = process.argv.slice(2).shift();
+eventEmitter.emit(eventNames.READ, file);
