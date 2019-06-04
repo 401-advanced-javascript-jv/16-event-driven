@@ -4,6 +4,11 @@ const fs = require('fs').promises;
 const eventEmitter = require('./event-emitter.js');
 const eventNames = require('./event-names.js');
 
+/**
+ * Event handler function to write a given buffer to a file
+ * @param filename
+ * @param buffer
+ */
 const handleWrite = (filename, buffer) => {
   fs.writeFile(filename, buffer)
     .then(() => {
